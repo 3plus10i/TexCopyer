@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         TexCopyer
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @license      GPLv3
 // @description  双击网页中的LaTex公式，将其复制到剪切板
+// @description:en Double click on a LaTeX formula on a webpage to copy it to the clipboard
 // @author       yjy
 // @match        *://*.wikipedia.org/*
 // @match        *://*.zhihu.com/*
 // @match        *://*.chatgpt.com/*
+// @match        *://*.moonshot.cn/*
 // ==/UserScript==
 
 (function() {
@@ -51,14 +53,16 @@
             target.elementSelector = 'span.katex';
             target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
             return target
+        
+        } else if (url.includes('moonshot.cn')) {
+            target.elementSelector = 'span.katex';
+            target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
+            return target
         }
-
         // 待添加更多网站的条件
         return null;
     }
 
-    // // 插件函数
-    // function createTooltip(targetSelector, getLatexString) {
     // 绑定事件到元素
     function addHandler() {
         let target = getTarget(window.location.href);
