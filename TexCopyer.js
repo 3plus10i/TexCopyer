@@ -10,6 +10,7 @@
 // @match        *://*.zhihu.com/*
 // @match        *://*.chatgpt.com/*
 // @match        *://*.moonshot.cn/*
+// @match        *://*.stackexchange.com/*
 // ==/UserScript==
 
 (function() {
@@ -57,6 +58,10 @@
         } else if (url.includes('moonshot.cn')) {
             target.elementSelector = 'span.katex';
             target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
+            return target
+        } else if (url.includes('stackexchange.com')) {
+            target.elementSelector = 'span.math-container';
+            target.getLatexString = (element) => formatLatex(element.querySelector('script').textContent);
             return target
         }
         // 待添加更多网站的条件
