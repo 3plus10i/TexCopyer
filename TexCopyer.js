@@ -11,9 +11,12 @@
 // @match        *://*.chatgpt.com/*
 // @match        *://*.moonshot.cn/*
 // @match        *://*.stackexchange.com/*
+// @match        *://oi-wiki.org/*
+// @match        *://*.luogu.com/*
+// @match        *://*.luogu.com.cn/*
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
     // 插入样式表
     const css = `
@@ -32,7 +35,7 @@
 
     // 获取对象和公式方法
     function getTarget(url) {
-        let target = {elementSelector: '', getLatexString: null}
+        let target = { elementSelector: '', getLatexString: null }
         // 格式化latex
         function formatLatex(input) {
             while (input.endsWith(' ') || input.endsWith('\\')) {
@@ -54,7 +57,7 @@
             target.elementSelector = 'span.katex';
             target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
             return target
-        
+
         } else if (url.includes('moonshot.cn')) {
             target.elementSelector = 'span.katex';
             target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
@@ -62,6 +65,16 @@
         } else if (url.includes('stackexchange.com')) {
             target.elementSelector = 'span.math-container';
             target.getLatexString = (element) => formatLatex(element.querySelector('script').textContent);
+            return target
+        }
+        else if (url.includes('oi-wiki.org')) {
+            target.elementSelector = 'mjx-container.MathJax';
+            target.getLatexString = (element) => formatLatex(element.querySelector('img').title);
+            return target
+        }
+        else if (url.includes('luogu.com')) {
+            target.elementSelector = 'span.katex';
+            target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
             return target
         }
         // 待添加更多网站的条件
@@ -93,8 +106,8 @@
                 tooltip.style.display = 'none';
                 tooltip.style.opacity = '0';
             });
-            
-            element.ondblclick = function() {
+
+            element.ondblclick = function () {
                 const latexString = target.getLatexString(element)
                 if (latexString !== null) {
                     console.log(`LaTeX copied: ${latexString}`) // for debug
@@ -107,7 +120,7 @@
             };
         });
     }
-    
+
     // 显示复制成功提示
     function showCopySuccessTooltip() {
         const copyTooltip = document.createElement("div");
@@ -124,7 +137,7 @@
 
     // 监听页面加载或变化，绑定事件
     document.addEventListener('DOMContentLoaded', addHandler);
-    new MutationObserver(addHandler).observe(document.documentElement, {childList: true, subtree: true});
+    new MutationObserver(addHandler).observe(document.documentElement, { childList: true, subtree: true });
 
 
 })();
