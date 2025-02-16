@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TexCopyer
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @license      GPLv3
 // @description  双击网页中的LaTex公式，将其复制到剪切板
 // @description:en Double click on a LaTeX formula on a webpage to copy it to the clipboard
@@ -14,6 +14,10 @@
 // @match        *://oi-wiki.org/*
 // @match        *://*.luogu.com/*
 // @match        *://*.luogu.com.cn/*
+// @match        *://*.doubao.com/*
+// @match        *://*.deepseek.com/*
+// @downloadURL https://update.greasyfork.org/scripts/499346/TexCopyer.user.js
+// @updateURL https://update.greasyfork.org/scripts/499346/TexCopyer.meta.js
 // ==/UserScript==
 
 (function () {
@@ -73,6 +77,16 @@
             return target
         }
         else if (url.includes('luogu.com')) {
+            target.elementSelector = 'span.katex';
+            target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
+            return target
+        }
+        else if (url.includes('doubao.com')) {
+            target.elementSelector = 'span.math-inline';
+            target.getLatexString = (element) => formatLatex(element.getAttribute('data-custom-copy-text'));
+            return target
+        }
+        else if (url.includes('deepseek.com')) {
             target.elementSelector = 'span.katex';
             target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
             return target
