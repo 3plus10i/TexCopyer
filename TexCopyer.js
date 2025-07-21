@@ -16,6 +16,7 @@
 // @match        *://*.luogu.com.cn/*
 // @match        *://*.doubao.com/*
 // @match        *://*.deepseek.com/*
+// @match        *://ieeexplore.ieee.org/*
 // @downloadURL https://update.greasyfork.org/scripts/499346/TexCopyer.user.js
 // @updateURL https://update.greasyfork.org/scripts/499346/TexCopyer.meta.js
 // ==/UserScript==
@@ -90,6 +91,32 @@
             target.elementSelector = 'span.katex';
             target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
             return target
+        }
+        else if (url.includes('ieeexplore.ieee.org')) {
+            target.elementSelector = 'span[id^="MathJax-Element-"][id$="-Frame"]';
+            target.getLatexString = (element) => {
+                // 提取元素ID中的编号部分（支持数字+字母组合）
+                const idMatch = element.id.match(/Element-(\w+)-Frame/);
+                if (!idMatch) return '';
+
+                const elementNumber = idMatch[1];
+                const scriptId = `MathJax-Element-${elementNumber}`;
+
+                // 获取对应的script元素
+                const scriptElement = document.getElementById(scriptId);
+                if (!scriptElement) return '';
+
+                let latex = scriptElement.textContent;
+
+                // 特殊格式处理
+                latex = latex.replace(/\\begin\{equation\*\}/g, '\\[\\begin{array}{l}');
+                latex = latex.replace(/\\end\{equation\*\}/g, '\\end{array}\\]');
+                // 处理标签 \tag{数字}
+                latex = latex.replace(/\\tag\{(\w+)\}/g, '\\\\');
+
+                return formatLatex(latex);
+            };
+            return target;
         }
         // 待添加更多网站的条件
         return null;
