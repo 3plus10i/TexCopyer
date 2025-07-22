@@ -16,6 +16,7 @@
 // @match        *://*.luogu.com.cn/*
 // @match        *://*.doubao.com/*
 // @match        *://*.deepseek.com/*
+// @match        *://*.chatboxai.app/*
 // @match        *://ieeexplore.ieee.org/*
 // @downloadURL https://update.greasyfork.org/scripts/499346/TexCopyer.user.js
 // @updateURL https://update.greasyfork.org/scripts/499346/TexCopyer.meta.js
@@ -88,6 +89,11 @@
             return target
         }
         else if (url.includes('deepseek.com')) {
+            target.elementSelector = 'span.katex';
+            target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
+            return target
+        }
+        else if (url.includes('chatboxai.app')) {
             target.elementSelector = 'span.katex';
             target.getLatexString = (element) => formatLatex(element.querySelector('annotation').textContent);
             return target
