@@ -19,4 +19,4 @@ This is a Tampermonkey script, add the js file to your Tampermonkey scripts to u
 - [x] StackExchange
 - [x] IEEE Explore（在线全文模式）
 - [x] OI Wiki
-- [x] Luogu
+- [ ] Luogu （前端改版已失效）
