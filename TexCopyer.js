@@ -167,7 +167,6 @@
 
     const css = `
         .latex-tooltip { position: fixed; background-color: rgba(0, 0, 0, 0.85); color: #fff; padding: 5px 10px; border-radius: 5px; font-size: 11px; z-index: 1000; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
-        .latex-copy-success { position: fixed; bottom: 10%; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.7); color: #fff; padding: 10px 20px; border-radius: 5px; font-size: 12px; z-index: 1000; transition: opacity 0.2s; pointer-events: none; }
     `;
     const styleSheet = document.createElement('style');
     styleSheet.type = 'text/css';
@@ -178,21 +177,11 @@
     tooltip.classList.add('latex-tooltip');
     document.body.appendChild(tooltip);
 
-    function showCopySuccess() {
-        const el = document.createElement('div');
-        el.className = 'latex-copy-success';
-        el.innerText = '💡 已复制LaTeX公式！';
-        document.body.appendChild(el);
-        setTimeout(() => {
-            el.style.opacity = '0';
-            setTimeout(() => el.remove(), 200);
-        }, 1000);
-    }
-
     // ---- 事件绑定 ----
 
     const DATA_FLAG = 'data-texcopyer-processed';
     let bindTimer = null;
+    let successLock = false; // 复制成功1s内禁止 mouseleave 隐藏 tooltip
 
     function showTooltip(el, text) {
         tooltip.textContent = text;
@@ -204,8 +193,18 @@
     }
 
     function hideTooltip() {
+        if (successLock) return;
         tooltip.style.display = 'none';
         tooltip.style.opacity = '0';
+    }
+
+    function showCopyResult(el) {
+        successLock = true;
+        showTooltip(el, '✔ 已复制');
+        setTimeout(() => {
+            successLock = false;
+            hideTooltip();
+        }, 1000);
     }
 
     function bindToNewElements() {
@@ -215,7 +214,8 @@
             if (el.hasAttribute(DATA_FLAG)) return;
             el.setAttribute(DATA_FLAG, '');
 
-            let instructionTimer = null;
+            let clickTimer = null;
+            let clickCount = 0;
 
             el.addEventListener('mouseenter', function () {
                 el.style.cursor = 'pointer';
@@ -225,27 +225,33 @@
             el.addEventListener('mouseleave', function () {
                 el.style.cursor = 'auto';
                 clearTimeout(bindTimer);
-                clearTimeout(instructionTimer);
+                clearTimeout(clickTimer);
+                clickCount = 0;
                 hideTooltip();
             });
 
             el.addEventListener('click', function () {
-                clearTimeout(bindTimer);
-                clearTimeout(instructionTimer);
-                hideTooltip();
-                instructionTimer = setTimeout(() => showTooltip(el, '💡 双击复制公式'), 300);
-            });
+                clickCount++;
 
-            el.ondblclick = function () {
-                clearTimeout(instructionTimer);
-                hideTooltip();
-                const latex = currentSite.extract(el);
-                if (latex) {
-                    console.log(`LaTeX copied: ${latex}`);
-                    navigator.clipboard.writeText(latex).then(showCopySuccess);
+                if (clickCount === 1) {
+                    clickTimer = setTimeout(() => {
+                        clickCount = 0;
+                        clearTimeout(bindTimer);
+                        showTooltip(el, '💡 双击复制LaTeX公式');
+                    }, 300);
+                } else {
+                    // click2 within 300ms → double-click
+                    clearTimeout(clickTimer);
+                    clearTimeout(bindTimer);
+                    clickCount = 0;
+                    const latex = currentSite.extract(el);
+                    if (latex) {
+                        console.log(`LaTeX copied: ${latex}`);
+                        navigator.clipboard.writeText(latex).then(() => showCopyResult(el));
+                    }
+                    window.getSelection().removeAllRanges();
                 }
-                window.getSelection().removeAllRanges();
-            };
+            });
         });
     }
 
