@@ -10,14 +10,21 @@ This is a Tampermonkey script, add the js file to your Tampermonkey scripts to u
 
 现已支持：
 - [x] ChatGPT
-- [x] Doubao （豆包）
+- [x] Gemini
+- [x] Grok
 - [x] DeepSeek
-- [ ] Moonshot （Kimi）(网页改版，暂时失效)
+- [x] Qianwen （千问）
+- [x] Metaso （秘塔）
+- [x] Z.ai （智谱GLM）
+- [x] Doubao （豆包）
 - [x] Chatbox （网页版）
 - [x] Zhihu （知乎）
 - [x] Wikipedia （维基百科）
 - [x] StackExchange
 - [x] IEEE Explore（在线全文模式）
 - [x] OI Wiki
-- [x] Bohrium （玻尔科研空间站）
+- [x] Bohrium （玻尔bohrium.com）
+
+暂不支持：
+- [ ] Moonshot （Kimi）(前端改版已失效)
 - [ ] Luogu （前端改版已失效）

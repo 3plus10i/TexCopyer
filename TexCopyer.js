@@ -3,22 +3,26 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.3
 // @license      GPLv3
-// @description  双击网页中的LaTex公式，将其复制到剪切板
+// @description  双击网页中的LaTex公式，将其复制到剪切板。支持主流AI网站、知乎、IEEE等等
 // @description:en Double click on a LaTeX formula on a webpage to copy it to the clipboard
 // @author       3plus10i
 // @match        *://*.wikipedia.org/*
 // @match        *://*.zhihu.com/*
 // @match        *://*.chatgpt.com/*
-// @match        *://*.moonshot.cn/*
 // @match        *://*.stackexchange.com/*
 // @match        *://oi-wiki.org/*
-// @match        *://*.luogu.com/*
-// @match        *://*.luogu.com.cn/*
 // @match        *://*.doubao.com/*
 // @match        *://*.deepseek.com/*
 // @match        *://*.chatboxai.app/*
 // @match        *://ieeexplore.ieee.org/*
 // @match        *://*.bohrium.com/*
+// @match        *://*.gemini.google.com/*
+// @match        *://aistudio.google.com/*
+// @match        *://*.grok.com/*
+// @match        *://x.com/*
+// @match        *://*.z.ai/*
+// @match        *://*.qianwen.com/*
+// @match        *://*.metaso.cn/*
 // @downloadURL https://update.greasyfork.org/scripts/499346/TexCopyer.user.js
 // @updateURL https://update.greasyfork.org/scripts/499346/TexCopyer.meta.js
 // ==/UserScript==
@@ -65,11 +69,8 @@
             selector: 'span.katex',
             extract: el => formatLatex(safeText(el, 'annotation')),
         },
-        {
-            match: u => u.includes('moonshot.cn'),
-            selector: 'span.katex',
-            extract: el => formatLatex(safeText(el, 'annotation')),
-        },
+        // Kimi (moonshot.cn) — Vue生产构建剥离了内部引用，
+        // 且仅通过闭包持有LaTeX源码，暂无可靠提取路径。
         {
             match: u => u.includes('stackexchange.com'),
             selector: 'span.math-container',
@@ -81,14 +82,14 @@
             extract: el => formatLatex(safeAttr(el.querySelector('img'), 'title')),
         },
         {
-            match: u => u.includes('luogu.com'),
-            selector: 'span.katex',
-            extract: el => formatLatex(safeText(el, 'annotation')),
-        },
-        {
             match: u => u.includes('doubao.com'),
             selector: 'span.math-inline',
-            extract: el => formatLatex(safeAttr(el, 'data-custom-copy-text')),
+            extract: el => {
+                const raw = safeAttr(el, 'copy-text');
+                // 剥离 \( ... \) 包裹
+                const inner = raw.replace(/^\\\(|\\\)$/g, '');
+                return inner ? formatLatex(inner) : '';
+            },
         },
         {
             match: u => u.includes('deepseek.com'),
@@ -122,6 +123,36 @@
             selector: '.math.math-inline, .math.math-display',
             extract: el => formatLatex(safeText(el, 'annotation[encoding="application/x-tex"]')),
         },
+        {
+            match: u => u.includes('gemini.google.com'),
+            selector: '.math-inline, .math-block',
+            extract: el => formatLatex(safeAttr(el, 'data-math')),
+        },
+        {
+            match: u => u.includes('aistudio.google.com'),
+            selector: 'ms-katex.inline, .katex-display, span.katex',
+            extract: el => formatLatex(safeText(el, 'annotation[encoding="application/x-tex"]')),
+        },
+        {
+            match: u => u.includes('grok.com') || u.includes('x.com'),
+            selector: 'span.katex',
+            extract: el => formatLatex(safeText(el, 'annotation')),
+        },
+        {
+            match: u => u.includes('z.ai'),
+            selector: 'span.katex',
+            extract: el => formatLatex(safeText(el, 'annotation')),
+        },
+        {
+            match: u => u.includes('qianwen.com'),
+            selector: 'span.katex, .katex-display',
+            extract: el => formatLatex(safeText(el, 'annotation')),
+        },
+        {
+            match: u => u.includes('metaso.cn'),
+            selector: 'span.katex',
+            extract: el => formatLatex(safeText(el, 'annotation')),
+        },
     ];
 
     /** 返回当前 URL 匹配的第一个站点配置，无匹配返回 null */
@@ -135,7 +166,7 @@
     // ---- DOM / UI ----
 
     const css = `
-        .latex-tooltip { position: fixed; background-color: rgba(0, 0, 0, 0.7); color: #fff; padding: 5px 10px; border-radius: 5px; font-size: 11px; z-index: 1000; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        .latex-tooltip { position: fixed; background-color: rgba(0, 0, 0, 0.85); color: #fff; padding: 5px 10px; border-radius: 5px; font-size: 11px; z-index: 1000; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
         .latex-copy-success { position: fixed; bottom: 10%; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.7); color: #fff; padding: 10px 20px; border-radius: 5px; font-size: 12px; z-index: 1000; transition: opacity 0.2s; pointer-events: none; }
     `;
     const styleSheet = document.createElement('style');
@@ -150,7 +181,7 @@
     function showCopySuccess() {
         const el = document.createElement('div');
         el.className = 'latex-copy-success';
-        el.innerText = '已复制LaTeX公式';
+        el.innerText = '💡 已复制LaTeX公式！';
         document.body.appendChild(el);
         setTimeout(() => {
             el.style.opacity = '0';
@@ -163,6 +194,20 @@
     const DATA_FLAG = 'data-texcopyer-processed';
     let bindTimer = null;
 
+    function showTooltip(el, text) {
+        tooltip.textContent = text;
+        const rect = el.getBoundingClientRect();
+        tooltip.style.left = `${rect.left}px`;
+        tooltip.style.display = 'block';
+        tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`;
+        tooltip.style.opacity = '0.8';
+    }
+
+    function hideTooltip() {
+        tooltip.style.display = 'none';
+        tooltip.style.opacity = '0';
+    }
+
     function bindToNewElements() {
         if (!currentSite) return;
 
@@ -170,27 +215,30 @@
             if (el.hasAttribute(DATA_FLAG)) return;
             el.setAttribute(DATA_FLAG, '');
 
+            let instructionTimer = null;
+
             el.addEventListener('mouseenter', function () {
                 el.style.cursor = 'pointer';
-                bindTimer = setTimeout(() => {
-                    tooltip.textContent = currentSite.extract(el);
-                    const rect = el.getBoundingClientRect();
-                    tooltip.style.left = `${rect.left}px`;
-                    tooltip.style.display = 'block';
-                    // 必须在block后计算相对位置，否则offsetHeight为0
-                    tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`;
-                    tooltip.style.opacity = '0.8';
-                }, 1000);
+                bindTimer = setTimeout(() => showTooltip(el, currentSite.extract(el)), 1000);
             });
 
             el.addEventListener('mouseleave', function () {
                 el.style.cursor = 'auto';
                 clearTimeout(bindTimer);
-                tooltip.style.display = 'none';
-                tooltip.style.opacity = '0';
+                clearTimeout(instructionTimer);
+                hideTooltip();
+            });
+
+            el.addEventListener('click', function () {
+                clearTimeout(bindTimer);
+                clearTimeout(instructionTimer);
+                hideTooltip();
+                instructionTimer = setTimeout(() => showTooltip(el, '💡 双击复制公式'), 300);
             });
 
             el.ondblclick = function () {
+                clearTimeout(instructionTimer);
+                hideTooltip();
                 const latex = currentSite.extract(el);
                 if (latex) {
                     console.log(`LaTeX copied: ${latex}`);
