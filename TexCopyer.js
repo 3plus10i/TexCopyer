@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TexCopyer
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @license      GPLv3
 // @description  双击网页中的LaTex公式，将其复制到剪切板。支持主流AI网站、知乎、IEEE等等
 // @description:en Double click on a LaTeX formula on a webpage to copy it to the clipboard
@@ -79,7 +79,7 @@
         {
             match: u => u.includes('oi-wiki.org'),
             selector: 'mjx-container.MathJax',
-            extract: el => formatLatex(safeAttr(el.querySelector('img'), 'title')),
+            extract: el => formatLatex(safeAttr(el.querySelector('mjx-math'), 'data-latex').trim()),
         },
         {
             match: u => u.includes('doubao.com'),
@@ -186,8 +186,8 @@
     function showTooltip(el, text) {
         tooltip.textContent = text;
         const rect = el.getBoundingClientRect();
-        tooltip.style.left = `${rect.left}px`;
         tooltip.style.display = 'block';
+        tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
         tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`;
         tooltip.style.opacity = '0.8';
     }
