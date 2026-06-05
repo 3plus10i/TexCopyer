@@ -24,6 +24,7 @@ This is a Tampermonkey script, add the js file to your Tampermonkey scripts to u
 - [x] IEEE Explore（在线全文模式）
 - [x] OI Wiki
 - [x] Bohrium （玻尔bohrium.com）
+- [x] CSDN （csdn.net）
 
 暂不支持：
 - [ ] Moonshot （Kimi）(前端改版已失效)

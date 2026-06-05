@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TexCopyer
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @license      GPLv3
 // @description  双击网页中的LaTex公式，将其复制到剪切板。支持主流AI网站、知乎、IEEE等等
 // @description:en Double click on a LaTeX formula on a webpage to copy it to the clipboard
@@ -23,6 +23,7 @@
 // @match        *://*.z.ai/*
 // @match        *://*.qianwen.com/*
 // @match        *://*.metaso.cn/*
+// @match        *://*.csdn.net/*
 // @downloadURL https://update.greasyfork.org/scripts/499346/TexCopyer.user.js
 // @updateURL https://update.greasyfork.org/scripts/499346/TexCopyer.meta.js
 // ==/UserScript==
@@ -152,6 +153,21 @@
             match: u => u.includes('metaso.cn'),
             selector: 'span.katex',
             extract: el => formatLatex(safeText(el, 'annotation')),
+        },
+        {
+            match: u => u.includes('csdn.net'),
+            selector: 'span.katex',
+            extract: el => {
+                const ml = el.querySelector('.katex-mathml');
+                if (!ml) return '';
+                // 真正的 LaTeX 表达式始终在最后一行非空文本。
+                const lines = ml.textContent.split('\n')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+                let tex = lines.pop() || '';
+                tex = tex.replace(/^\\displaystyle\s+/, '');
+                return formatLatex(tex);
+            },
         },
     ];
 
