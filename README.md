@@ -27,5 +27,5 @@ This is a Tampermonkey script, add the js file to your Tampermonkey scripts to u
 - [x] CSDN （csdn.net）
 
 暂不支持：
-- [ ] Moonshot （Kimi）(前端改版已失效)
+- [ ] Moonshot （Kimi）(官方提供了公式右键复制)
 - [ ] Luogu （前端改版已失效）

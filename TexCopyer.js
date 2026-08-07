@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TexCopyer
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.6.1
 // @license      GPLv3
 // @description  双击网页中的LaTex公式，将其复制到剪切板。支持主流AI网站、知乎、IEEE等等
 // @description:en Double click on a LaTeX formula on a webpage to copy it to the clipboard
