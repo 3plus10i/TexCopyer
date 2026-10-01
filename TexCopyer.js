@@ -67,10 +67,15 @@
         },
         {
             match: u => u.includes('chatgpt.com'),
-            selector: '[role="math"][data-math-source]',
-            extract: el => formatLatex(
-                safeAttr(el, 'data-math-source').trim()
-            ),
+            selector: '.katex',
+            extract: el => {
+                const annotation = el.querySelector(
+                    'annotation[encoding="application/x-tex"]'
+                );
+                return annotation
+                    ? formatLatex(annotation.textContent.trim())
+                : '';
+            },
         },
         // Kimi (moonshot.cn) — Vue生产构建剥离了内部引用，
         // 且仅通过闭包持有LaTeX源码，暂无可靠提取路径。
