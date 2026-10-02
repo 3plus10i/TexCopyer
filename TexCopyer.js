@@ -67,7 +67,7 @@
         },
         {
             match: u => u.includes('chatgpt.com'),
-            selector: '[role="math"][data-math-source]',
+            selector: '[data-math-source]',
             extract: el => formatLatex(
                 safeAttr(el, 'data-math-source').trim()
             ),
